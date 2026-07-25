@@ -1,0 +1,39 @@
+{
+    "name": "elid-oauth-provider",
+    "version": "1.0.0",
+    "private": true,
+    "type": "module",
+    "engines": {
+        "node": ">=22"
+    },
+    "scripts": {
+        "start": "node server.mjs",
+        "check": "node --check server.mjs && find src -name '*.mjs' -print0 | xargs -0 -n1 node --check",
+        "lint": "npx oxlint .",
+        "test": "npx --node-options=\"--experimental-vm-modules --no-warnings\" jest --coverage --detectOpenHandles --silent --runInBand"
+    },
+    "dependencies": {
+        "bcryptjs": "^3.0.2",
+        "dotenv": "^17.4.2",
+        "express": "^5.1.0",
+        "mysql2": "^3.15.0"
+    },
+    "jest": {
+        "testEnvironment": "node",
+        "coveragePathIgnorePatterns": [
+            "/src/agent\\.mjs$",
+            "/src/completion\\.mjs$",
+            "/src/shell\\.mjs$",
+            "/src/tool-shell\\.mjs$"
+        ],
+        "testMatch": [
+            "**/?(*.)+(spec|test).[jt]s?(x)",
+            "**/?(*.)+(spec|test).mjs",
+            "**/?(*.)+(spec|test).cjs"
+        ]
+    },
+    "devDependencies": {
+        "jest": "^30.4.2",
+        "oxlint": "^1.75.0"
+    }
+}

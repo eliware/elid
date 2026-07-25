@@ -1,0 +1,34 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.secret
+*.secrets
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Dependencies and generated reports
+node_modules/
+coverage/
+.nyc_output/
+dist/
+build/
+
+# Logs and runtime state
+*.log
+*.pid
+*.seed
+*.pid.lock
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local tooling / OS files
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+.agentx_responseid

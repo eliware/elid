@@ -1,0 +1,15 @@
+[Unit]
+Description=Elid OAuth Provider
+After=network-online.target mysql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/elid
+EnvironmentFile=/opt/elid/.env
+ExecStart=/usr/bin/node /opt/elid/server.mjs
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
