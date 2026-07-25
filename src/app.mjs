@@ -3,6 +3,7 @@ import {mountAdmin} from './admin.mjs';
 import {mountAccount} from './account.mjs';
 import {mountOAuthRoutes} from './oauth-routes.mjs';
 import {mountTestRoutes} from './test-routes.mjs';
+import {envNumber} from './rate-limit.mjs';
 
 export function createApp({db, oauth, rateLimit, expressFactory = express}) {
   const app = expressFactory();
@@ -10,7 +11,7 @@ export function createApp({db, oauth, rateLimit, expressFactory = express}) {
   if (process.env.TRUST_PROXY === 'true') app.set('trust proxy', 1);
   app.use(express.urlencoded({extended: false, limit: '32kb'}));
   app.use(express.json({limit: '32kb'}));
-  app.use(rateLimit({db, windowMs: 60000, max: 300}));
+  app.use(rateLimit({db, windowMs: envNumber('GLOBAL_RATE_WINDOW_MS', 60000), max: envNumber('GLOBAL_RATE_MAX', 1000)}));
   mountAdmin(app, db); mountAccount(app, db);
   mountOAuthRoutes(app, {db, oauth, rateLimit});
   if (process.env.ENABLE_TEST_ROUTES === 'true' && process.env.NODE_ENV !== 'production') mountTestRoutes(app, {db, oauth});
