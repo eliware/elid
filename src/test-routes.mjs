@@ -7,7 +7,8 @@ export function mountTestRoutes(app, {db, oauth, clientId='elid-test-app', publi
     const state = randomToken(24);
     const verifier = randomToken(48);
     const host = publicHost || req.headers.host;
-    const redirectUri = `http://${host}/test/callback`;
+    const proto = req.get?.('x-forwarded-proto') || (req.secure ? 'https' : 'http');
+    const redirectUri = `${proto}://${host}/test/callback`;
     await db.execute(
       'INSERT INTO oauth_pkce_flows(state_hash,verifier,redirect_uri,expires_at) VALUES(SHA2(?,256),?,?,DATE_ADD(NOW(),INTERVAL 5 MINUTE))',
       [state, verifier, redirectUri],
