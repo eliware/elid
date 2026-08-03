@@ -18,8 +18,10 @@ export function mountOAuthRoutes(app, {db, oauth, rateLimit}) {
     } catch (error) { console.error('oauth authorize error', error); res.status(400).json({error: 'server_error'}); }
   });
   app.post('/oauth/register', rateLimit({db, windowMs: 60000, max: 10}), async (req, res) => {
-    try { const result = await oauth.register(req.body); res.status(result.error ? 400 : 201).json(result); }
-    catch (error) { console.error('oauth registration error', error); res.status(500).json({error: 'server_error'}); }
+    const body=req.body&&typeof req.body==='object'?req.body:{};
+    console.info('oauth registration request', {host:req.get?.('host')||req.headers.host, forwardedProto:req.headers['x-forwarded-proto']||null, contentType:req.headers['content-type']||null, bodyKeys:Object.keys(body), clientNameLength:typeof body.client_name==='string'?body.client_name.length:null, redirectUriCount:Array.isArray(body.redirect_uris)?body.redirect_uris.length:null, authMethod:body.token_endpoint_auth_method||'none', grantTypes:body.grant_types||['authorization_code'], responseTypes:body.response_types||['code'], scope:body.scope||'funnel:read', resource:body.resource||body.resource_uri||'https://funnel.purinton.us/mcp'});
+    try { const result = await oauth.register(body); const status=result.error?400:201; console.info('oauth registration result', {status,error:result.error||null,clientId:result.client_id||null}); res.status(status).json(result); }
+    catch (error) { console.error('oauth registration error', {name:error.name,message:error.message,stack:error.stack}); res.status(500).json({error: 'server_error'}); }
   });
   app.post('/oauth/token', rateLimit({db, windowMs: 60000, max: 30}), async (req, res) => {
     try { const result = await oauth.token(req.body); res.status(result.error ? 400 : 200).json(result); }
