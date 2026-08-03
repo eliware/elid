@@ -30,7 +30,8 @@ export function createOAuth(db) {
     if (!body || typeof body !== 'object') return fail('invalid_client_metadata', 'JSON object required');
     const name = String(body.client_name || '').trim();
     const uris = body.redirect_uris;
-    if (!name || name.length > 191 || !Array.isArray(uris) || !uris.length || uris.length > 10 || uris.some(uri => !registrationRedirect(uri))) return fail('invalid_redirect_uri', 'Invalid redirect URI');
+    const invalidRedirects=Array.isArray(uris)?uris.filter(uri=>!registrationRedirect(uri)):[];
+    if (!name || name.length > 191 || !Array.isArray(uris) || !uris.length || uris.length > 10 || invalidRedirects.length) { console.warn('oauth registration rejected redirects', {nameLength:name.length, redirectUris:Array.isArray(uris)?uris:null, invalidRedirects}); return fail('invalid_redirect_uri', 'Invalid redirect URI'); }
     const auth = body.token_endpoint_auth_method || 'none';
     const grants = body.grant_types || ['authorization_code'];
     const responses = body.response_types || ['code'];
