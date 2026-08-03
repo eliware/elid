@@ -34,7 +34,8 @@ export function createOAuth(db) {
     const auth = body.token_endpoint_auth_method || 'none';
     const grants = body.grant_types || ['authorization_code'];
     const responses = body.response_types || ['code'];
-    if (auth !== 'none' || JSON.stringify(grants) !== '["authorization_code"]' || JSON.stringify(responses) !== '["code"]') return fail('invalid_client_metadata', 'Only public authorization-code clients are supported');
+    const supportedGrants = JSON.stringify(grants) === '["authorization_code"]' || JSON.stringify(grants) === '["authorization_code","refresh_token"]';
+    if (auth !== 'none' || !supportedGrants || JSON.stringify(responses) !== '["code"]') return fail('invalid_client_metadata', 'Only public authorization-code clients with optional refresh tokens are supported');
     if (body.code_challenge_methods_supported && (!Array.isArray(body.code_challenge_methods_supported) || body.code_challenge_methods_supported.some(x => x !== 'S256'))) return fail('invalid_client_metadata', 'Only S256 PKCE is supported');
     const requested = splitScopes(body.scope || 'funnel:read');
     if (!requested.length || requested.some(x => !['funnel:read', 'funnel:write'].includes(x))) return fail('invalid_scope', 'Invalid registration scope');
@@ -44,7 +45,7 @@ export function createOAuth(db) {
     const issued = new Date();
     await db.execute('INSERT INTO oauth_clients(id,client_id,name,redirect_uris,public_client,allowed_scopes,allowed_resources) VALUES(?,?,?,?,TRUE,?,?)', [snowflake(), clientId, name, JSON.stringify(uris), JSON.stringify(requested), JSON.stringify([resource])]);
     await db.execute('INSERT INTO oauth_client_registrations(client_id,metadata,created_at) VALUES(?,?,?)', [clientId, JSON.stringify(body), issued]);
-    return {client_id: clientId, client_name: name, redirect_uris: uris, token_endpoint_auth_method: 'none', grant_types: ['authorization_code'], response_types: ['code'], code_challenge_methods_supported: ['S256'], scope: requested.join(' '), client_id_issued_at: Math.floor(issued.getTime()/1000)};
+    return {client_id: clientId, client_name: name, redirect_uris: uris, token_endpoint_auth_method: 'none', grant_types: grants, response_types: ['code'], code_challenge_methods_supported: ['S256'], scope: requested.join(' '), client_id_issued_at: Math.floor(issued.getTime()/1000)};
   }
   async function authorize(q, userId) {
     const c=await client(q.client_id);
