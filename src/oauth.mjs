@@ -23,7 +23,7 @@ export function createOAuth(db) {
   }
   function registrationRedirect(uri) {
     if (typeof uri !== 'string' || uri.length > 2048) return false;
-    try { const u = new URL(uri); return u.protocol === 'https:' || ['http://127.0.0.1:33418', 'https://vscode.dev/redirect'].includes(uri); }
+    try { const u = new URL(uri); return u.protocol === 'https:' || ['http://127.0.0.1:33418', 'http://localhost:33418', 'http://127.0.0.1:33418/', 'http://localhost:33418/', 'https://vscode.dev/redirect', 'https://insiders.vscode.dev/redirect'].includes(uri); }
     catch { return false; }
   }
   async function register(body) {
