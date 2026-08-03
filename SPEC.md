@@ -161,7 +161,7 @@ For public PKCE clients, support `token_endpoint_auth_method: "none"`, `grant_ty
 Return HTTP 201 JSON containing at least `client_id`, the accepted client metadata, and `client_id_issued_at`.
 
 - Require HTTPS redirect URIs, except explicit localhost development URIs.
-- For Funnel MCP, permit `http://127.0.0.1:33418` and `https://vscode.dev/redirect`; preserve the exact supplied list.
+- For Funnel MCP, permit `http://127.0.0.1/`, `http://127.0.0.1:33418`, `https://vscode.dev/redirect`, and `https://insiders.vscode.dev/redirect`; preserve the exact supplied list.
 - Never wildcard-match or loosely normalize redirect URIs.
 - Validate redirect URI count, length, scheme, and all requested registration capabilities.
 - Apply request-size limits, rate limiting, and abuse controls.
