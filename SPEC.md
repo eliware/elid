@@ -106,6 +106,7 @@ It must advertise only implemented capabilities. For MCP support it should inclu
       "authorization_endpoint": "https://auth.purinton.us/oauth/authorize",
       "token_endpoint": "https://auth.purinton.us/oauth/token",
       "introspection_endpoint": "https://auth.purinton.us/oauth/introspect",
+      "registration_endpoint": "https://auth.purinton.us/oauth/register",
       "response_types_supported": ["code"],
       "grant_types_supported": ["authorization_code", "refresh_token"],
       "code_challenge_methods_supported": ["S256"],
@@ -114,7 +115,7 @@ It must advertise only implemented capabilities. For MCP support it should inclu
       "resource_indicators_supported": true
     }
 
-If Dynamic Client Registration is not implemented, do not advertise it.
+Dynamic Client Registration is implemented at `POST /oauth/register` and must be advertised as `registration_endpoint`.
 
 ## Protected Resource Metadata
 
@@ -143,16 +144,32 @@ The user must be able to approve or deny. Elid must not silently grant unrequest
 
 ## Dynamic Client Registration
 
-Dynamic Client Registration (`POST /oauth/register`) is optional for the initial Funnel integration. Pre-registration is acceptable.
+`POST /oauth/register` implements RFC 7591 for public MCP clients, so VS Code can register without manual client setup. Registration is public and must not require an admin login.
 
-If implemented:
+Accept JSON metadata including:
 
-- Support public PKCE clients without issuing client secrets.
-- Require HTTPS redirect URIs, except localhost development URIs.
-- Validate redirect URI count, length, and scheme.
-- Apply rate limiting and abuse controls.
-- Store registrations in MySQL.
-- Allow administrators to revoke registrations.
+- `client_name`
+- `redirect_uris`
+- `token_endpoint_auth_method`
+- `grant_types`
+- `response_types`
+- `scope`
+- optionally, a resource policy field
+
+For public PKCE clients, support `token_endpoint_auth_method: "none"`, `grant_types: ["authorization_code"]`, `response_types: ["code"]`, and `code_challenge_methods_supported: ["S256"]`. Do not issue a client secret.
+
+Return HTTP 201 JSON containing at least `client_id`, the accepted client metadata, and `client_id_issued_at`.
+
+- Require HTTPS redirect URIs, except explicit localhost development URIs.
+- For Funnel MCP, permit `http://127.0.0.1:33418` and `https://vscode.dev/redirect`; preserve the exact supplied list.
+- Never wildcard-match or loosely normalize redirect URIs.
+- Validate redirect URI count, length, scheme, and all requested registration capabilities.
+- Apply request-size limits, rate limiting, and abuse controls.
+- Generate server-controlled client IDs; prevent attacker-controlled duplicates.
+- Store registration metadata in MySQL and retain revocation/audit records.
+- Allow administrators to revoke dynamic registrations.
+
+Dynamic clients targeting Funnel are constrained to resource `https://funnel.purinton.us/mcp`, default to `funnel:read`, may request `funnel:write`, and must never receive `funnel:admin`. Resource, scope, consent, exact redirect, and S256 PKCE checks remain mandatory during authorization and token issuance. The existing pre-registered `funnel-mcp` client remains separate and unchanged.
 
 ## Identity and UI
 

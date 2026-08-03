@@ -15,7 +15,7 @@ export function createApp({db, oauth, rateLimit, expressFactory = express}) {
   mountAdmin(app, db); mountAccount(app, db);
   mountOAuthRoutes(app, {db, oauth, rateLimit});
   if (process.env.ENABLE_TEST_ROUTES === 'true' && process.env.NODE_ENV !== 'production') mountTestRoutes(app, {db, oauth});
-  app.get('/.well-known/oauth-authorization-server', (req, res) => { const issuer=process.env.OAUTH_ISSUER || `${req.protocol}://${req.get?.('host')||req.headers.host}`; res.json({issuer,authorization_endpoint:`${issuer}/oauth/authorize`,token_endpoint:`${issuer}/oauth/token`,introspection_endpoint:`${issuer}/oauth/introspect`,response_types_supported:['code'],grant_types_supported:['authorization_code','refresh_token'],code_challenge_methods_supported:['S256'],scopes_supported:(process.env.OAUTH_SCOPES||'funnel:read funnel:write').split(/\s+/).filter(Boolean),request_parameter_supported:true,resource_indicators_supported:true}); });
+  app.get('/.well-known/oauth-authorization-server', (req, res) => { const issuer=process.env.OAUTH_ISSUER || `${req.protocol}://${req.get?.('host')||req.headers.host}`; res.json({issuer,authorization_endpoint:`${issuer}/oauth/authorize`,token_endpoint:`${issuer}/oauth/token`,introspection_endpoint:`${issuer}/oauth/introspect`,registration_endpoint:`${issuer}/oauth/register`,response_types_supported:['code'],grant_types_supported:['authorization_code','refresh_token'],code_challenge_methods_supported:['S256'],scopes_supported:(process.env.OAUTH_SCOPES||'funnel:read funnel:write').split(/\s+/).filter(Boolean),request_parameter_supported:true,resource_indicators_supported:true}); });
   app.get('/health', (_, res) => res.json({ok: true}));
   return app;
 }

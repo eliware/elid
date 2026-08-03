@@ -17,6 +17,10 @@ export function mountOAuthRoutes(app, {db, oauth, rateLimit}) {
       res.redirect(await oauth.authorize(q, rows[0].id));
     } catch (error) { console.error('oauth authorize error', error); res.status(400).json({error: 'server_error'}); }
   });
+  app.post('/oauth/register', rateLimit({db, windowMs: 60000, max: 10}), async (req, res) => {
+    try { const result = await oauth.register(req.body); res.status(result.error ? 400 : 201).json(result); }
+    catch (error) { console.error('oauth registration error', error); res.status(500).json({error: 'server_error'}); }
+  });
   app.post('/oauth/token', rateLimit({db, windowMs: 60000, max: 30}), async (req, res) => {
     try { const result = await oauth.token(req.body); res.status(result.error ? 400 : 200).json(result); }
     catch (error) { console.error('oauth token error', error); res.status(500).json({error: 'server_error'}); }

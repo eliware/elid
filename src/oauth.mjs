@@ -21,6 +21,31 @@ export function createOAuth(db) {
     const allowed=allowedValues(c?.allowed_scopes);
     return !allowed.length || requested.every(x=>allowed.includes(x));
   }
+  function registrationRedirect(uri) {
+    if (typeof uri !== 'string' || uri.length > 2048) return false;
+    try { const u = new URL(uri); return u.protocol === 'https:' || ['http://127.0.0.1:33418', 'https://vscode.dev/redirect'].includes(uri); }
+    catch { return false; }
+  }
+  async function register(body) {
+    if (!body || typeof body !== 'object') return fail('invalid_client_metadata', 'JSON object required');
+    const name = String(body.client_name || '').trim();
+    const uris = body.redirect_uris;
+    if (!name || name.length > 191 || !Array.isArray(uris) || !uris.length || uris.length > 10 || uris.some(uri => !registrationRedirect(uri))) return fail('invalid_redirect_uri', 'Invalid redirect URI');
+    const auth = body.token_endpoint_auth_method || 'none';
+    const grants = body.grant_types || ['authorization_code'];
+    const responses = body.response_types || ['code'];
+    if (auth !== 'none' || JSON.stringify(grants) !== '["authorization_code"]' || JSON.stringify(responses) !== '["code"]') return fail('invalid_client_metadata', 'Only public authorization-code clients are supported');
+    if (body.code_challenge_methods_supported && (!Array.isArray(body.code_challenge_methods_supported) || body.code_challenge_methods_supported.some(x => x !== 'S256'))) return fail('invalid_client_metadata', 'Only S256 PKCE is supported');
+    const requested = splitScopes(body.scope || 'funnel:read');
+    if (!requested.length || requested.some(x => !['funnel:read', 'funnel:write'].includes(x))) return fail('invalid_scope', 'Invalid registration scope');
+    const resource = body.resource || body.resource_uri || 'https://funnel.purinton.us/mcp';
+    if (resource !== 'https://funnel.purinton.us/mcp') return fail('invalid_target', 'Invalid resource');
+    const clientId = `dcr_${randomToken(18)}`;
+    const issued = new Date();
+    await db.execute('INSERT INTO oauth_clients(id,client_id,name,redirect_uris,public_client,allowed_scopes,allowed_resources) VALUES(?,?,?,?,TRUE,?,?)', [snowflake(), clientId, name, JSON.stringify(uris), JSON.stringify(requested), JSON.stringify([resource])]);
+    await db.execute('INSERT INTO oauth_client_registrations(client_id,metadata,created_at) VALUES(?,?,?)', [clientId, JSON.stringify(body), issued]);
+    return {client_id: clientId, client_name: name, redirect_uris: uris, token_endpoint_auth_method: 'none', grant_types: ['authorization_code'], response_types: ['code'], code_challenge_methods_supported: ['S256'], scope: requested.join(' '), client_id_issued_at: Math.floor(issued.getTime()/1000)};
+  }
   async function authorize(q, userId) {
     const c=await client(q.client_id);
     if(!c||q.response_type!=='code'||!q.redirect_uri||!validRedirect(allowedValues(c.redirect_uris),q.redirect_uri)) throw fail('invalid_request','Invalid client or redirect URI');
@@ -55,5 +80,5 @@ export function createOAuth(db) {
     await db.execute('INSERT INTO oauth_tokens (id,token_hash,token_type,client_id,user_id,scope,resource,expires_at,revoked_at,family_id,created_at) VALUES (?, ?, "refresh", ?, ?, ?, ?, ?, NULL, ?, ?)',[snowflake(),digest(refresh),clientId,userId,scope,resource,new Date(Date.now()+2592000000),familyId,now]);
     return {access_token:access,token_type:'Bearer',expires_in:3600,refresh_token:refresh,scope,...(resource?{resource}: {})};
   }
-  return {authorize,token,resourceUri};
+  return {authorize,token,register,resourceUri};
 }
