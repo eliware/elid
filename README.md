@@ -48,3 +48,5 @@ OIDC_KEY_DIR=/var/lib/elid/keys npm run oidc:keys -- --rotate
 ```
 
 Back up the encrypted key directory. Never commit private keys. The runtime expects `current-private.pem`, `current-public.pem`, and `current-kid`.
+
+For local Compose testing, place a disposable key set in `.local-oidc-keys/`; it is ignored and mounted read-only. Production should use a Kubernetes Secret or protected host volume, not repository files.

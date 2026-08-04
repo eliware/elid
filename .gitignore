@@ -33,3 +33,5 @@ yarn-error.log*
 *.swo
 .agentx_responseid
 .jest.result
+
+.local-oidc-keys/

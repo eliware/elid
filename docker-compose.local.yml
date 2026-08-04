@@ -6,7 +6,10 @@ services:
       - "8080:8080"
     env_file:
       - .env
+    volumes:
+      - ./.local-oidc-keys:/var/lib/elid/keys:ro
     environment:
       NODE_ENV: production
       HTTP_PORT: 8080
       TRUST_PROXY: "true"
+      OIDC_KEY_DIR: /var/lib/elid/keys

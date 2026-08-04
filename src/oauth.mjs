@@ -71,16 +71,16 @@ export function createOAuth(db) {
       if(!row||!c||row.client_id!==body.client_id||row.redirect_uri!==body.redirect_uri||!body.code_verifier||pkce(body.code_verifier)!==row.code_challenge) return fail('invalid_grant','Invalid authorization code or PKCE verifier');
       if(row.resource && body.resource!==row.resource) return fail('invalid_grant','Invalid resource');
       if(row.resource && !resourceAllowed(c,row.resource)) return fail('invalid_grant','Invalid resource');
-      await db.execute('UPDATE oauth_codes SET used_at=NOW() WHERE id=? AND used_at IS NULL',[row.id]); return issue(row.client_id,row.user_id,row.scope,row.family_id,row.resource);
+      await db.execute('UPDATE oauth_codes SET used_at=NOW() WHERE id=? AND used_at IS NULL',[row.id]); return issue(row.client_id,row.user_id,row.scope,row.family_id,row.resource,row.nonce);
     }
     if(body.grant_type==='refresh_token') {
       const [r]=await db.execute("SELECT * FROM oauth_tokens WHERE token_hash=? AND token_type='refresh' AND revoked_at IS NULL AND expires_at>NOW()",[digest(body.refresh_token||'')]); const row=r[0];
       if(!row||row.client_id!==body.client_id||body.resource && body.resource!==row.resource) return fail('invalid_grant','Invalid refresh token or resource');
-      await db.execute('UPDATE oauth_tokens SET revoked_at=NOW() WHERE family_id=? AND revoked_at IS NULL',[row.family_id]); return issue(row.client_id,row.user_id,row.scope,row.family_id,row.resource);
+      await db.execute('UPDATE oauth_tokens SET revoked_at=NOW() WHERE family_id=? AND revoked_at IS NULL',[row.family_id]); return issue(row.client_id,row.user_id,row.scope,row.family_id,row.resource,row.nonce);
     }
     return fail('unsupported_grant_type','Only authorization_code and refresh_token are supported');
   }
-  async function issue(clientId,userId,scope,familyId=snowflake(),resource=null) {
+  async function issue(clientId,userId,scope,familyId=snowflake(),resource=null,nonce=null) {
     const access=randomToken(), refresh=randomToken(), now=new Date();
     await db.execute('INSERT INTO oauth_tokens (id,token_hash,token_type,client_id,user_id,scope,resource,expires_at,revoked_at,family_id,created_at) VALUES (?, ?, "access", ?, ?, ?, ?, ?, NULL, ?, ?)',[snowflake(),digest(access),clientId,userId,scope,resource,new Date(Date.now()+3600000),familyId,now]);
     await db.execute('INSERT INTO oauth_tokens (id,token_hash,token_type,client_id,user_id,scope,resource,expires_at,revoked_at,family_id,created_at) VALUES (?, ?, "refresh", ?, ?, ?, ?, ?, NULL, ?, ?)',[snowflake(),digest(refresh),clientId,userId,scope,resource,new Date(Date.now()+2592000000),familyId,now]);
@@ -93,7 +93,7 @@ export function createOAuth(db) {
       const claims={iss:process.env.OAUTH_ISSUER||'https://auth.purinton.us',sub:userId,aud:clientId,iat:now,exp:now+900,auth_time:now,preferred_username:user.username||userId,name:user.display_name||user.username||userId,scope};
       if (user.email) { claims.email=user.email; claims.email_verified=Boolean(user.email_verified); }
       if (groups.length) claims.groups=groups;
-      if (row?.nonce) claims.nonce=row.nonce;
+      if (nonce) claims.nonce=nonce;
       result.id_token=signJwt(claims,key);
     }
     return result;
