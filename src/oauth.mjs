@@ -62,7 +62,7 @@ export function createOAuth(db) {
     if(resource && !resourceAllowed(c,resource)) throw fail('invalid_target','Invalid resource');
     if(!scopesAllowed(c,q.scope)) throw fail('invalid_scope','Unknown or unauthorized scope');
     const scope=splitScopes(q.scope).join(' '), code=randomToken(32);
-    await db.execute('INSERT INTO oauth_codes (id,code_hash,client_id,user_id,redirect_uri,scope,resource,code_challenge,code_challenge_method,expires_at) VALUES (?,?,?,?,?,?,?,?,?,DATE_ADD(NOW(),INTERVAL 5 MINUTE))',[snowflake(),digest(code),q.client_id,userId,q.redirect_uri,scope,resource,q.code_challenge,q.code_challenge_method]);
+    await db.execute('INSERT INTO oauth_codes (id,code_hash,client_id,user_id,redirect_uri,scope,resource,code_challenge,code_challenge_method,nonce,expires_at) VALUES (?,?,?,?,?,?,?,?,?, ?,DATE_ADD(NOW(),INTERVAL 5 MINUTE))',[snowflake(),digest(code),q.client_id,userId,q.redirect_uri,scope,resource,q.code_challenge,q.code_challenge_method,q.nonce||null]);
     return `${q.redirect_uri}?code=${encodeURIComponent(code)}&state=${encodeURIComponent(q.state||'')}`;
   }
   async function token(body) {
@@ -87,7 +87,14 @@ export function createOAuth(db) {
     const result={access_token:access,token_type:'Bearer',expires_in:3600,refresh_token:refresh,scope,...(resource?{resource}: {})};
     if (splitScopes(scope).includes('openid')) {
       const key=await loadSigningKey(); const now=Math.floor(Date.now()/1000);
-      result.id_token=signJwt({iss:process.env.OAUTH_ISSUER||'https://auth.purinton.us',sub:userId,aud:clientId,iat:now,exp:now+3600,auth_time:now,preferred_username:userId,scope},key);
+      const [users]=await db.execute('SELECT username,email,display_name,email_verified FROM oauth_users WHERE id=?',[userId]);
+      const user=users[0]||{}; let groups=[];
+      try { const [rows]=await db.execute('SELECT group_name FROM oauth_user_groups WHERE user_id=? ORDER BY group_name',[userId]); groups=rows.map(x=>x.group_name); } catch {}
+      const claims={iss:process.env.OAUTH_ISSUER||'https://auth.purinton.us',sub:userId,aud:clientId,iat:now,exp:now+900,auth_time:now,preferred_username:user.username||userId,name:user.display_name||user.username||userId,scope};
+      if (user.email) { claims.email=user.email; claims.email_verified=Boolean(user.email_verified); }
+      if (groups.length) claims.groups=groups;
+      if (row?.nonce) claims.nonce=row.nonce;
+      result.id_token=signJwt(claims,key);
     }
     return result;
   }
