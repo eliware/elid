@@ -1,5 +1,6 @@
 import {randomToken,digest,pkce,validRedirect} from './crypto.mjs';
 import {snowflake} from './snowflake.mjs';
+import {loadSigningKey, signJwt} from './oidc-keys.mjs';
 
 const fail=(error,description)=>({error,error_description:description});
 const splitScopes=value=>[...new Set(String(value??'').trim().split(/\s+/).filter(Boolean))];
@@ -19,7 +20,7 @@ export function createOAuth(db) {
     return (allowed.length ? allowed : configured).includes(value);
   }
   function scopesAllowed(c, scope) {
-    const requested=splitScopes(scope); const known=configuredScopes();
+    const requested=splitScopes(scope); const known=splitScopes(process.env.OAUTH_SCOPES||'openid profile email groups funnel:read funnel:write');
     if (requested.some(x=>!known.includes(x))) return false;
     const allowed=allowedValues(c?.allowed_scopes);
     return !allowed.length || requested.every(x=>allowed.includes(x));
@@ -83,7 +84,12 @@ export function createOAuth(db) {
     const access=randomToken(), refresh=randomToken(), now=new Date();
     await db.execute('INSERT INTO oauth_tokens (id,token_hash,token_type,client_id,user_id,scope,resource,expires_at,revoked_at,family_id,created_at) VALUES (?, ?, "access", ?, ?, ?, ?, ?, NULL, ?, ?)',[snowflake(),digest(access),clientId,userId,scope,resource,new Date(Date.now()+3600000),familyId,now]);
     await db.execute('INSERT INTO oauth_tokens (id,token_hash,token_type,client_id,user_id,scope,resource,expires_at,revoked_at,family_id,created_at) VALUES (?, ?, "refresh", ?, ?, ?, ?, ?, NULL, ?, ?)',[snowflake(),digest(refresh),clientId,userId,scope,resource,new Date(Date.now()+2592000000),familyId,now]);
-    return {access_token:access,token_type:'Bearer',expires_in:3600,refresh_token:refresh,scope,...(resource?{resource}: {})};
+    const result={access_token:access,token_type:'Bearer',expires_in:3600,refresh_token:refresh,scope,...(resource?{resource}: {})};
+    if (splitScopes(scope).includes('openid')) {
+      const key=await loadSigningKey(); const now=Math.floor(Date.now()/1000);
+      result.id_token=signJwt({iss:process.env.OAUTH_ISSUER||'https://auth.purinton.us',sub:userId,aud:clientId,iat:now,exp:now+3600,auth_time:now,preferred_username:userId,scope},key);
+    }
+    return result;
   }
   return {authorize,token,register,resourceUri};
 }

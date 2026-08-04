@@ -16,3 +16,11 @@ export function publicJwk(key) {
   const jwk = crypto.createPublicKey(key.publicKey).export({ format: 'jwk' });
   return { ...jwk, kid: key.kid, alg: key.algorithm, use: 'sig', key_ops: ['verify'] };
 }
+
+export function signJwt(payload, key) {
+  const header = Buffer.from(JSON.stringify({ alg: key.algorithm, typ: 'JWT', kid: key.kid })).toString('base64url');
+  const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const input = `${header}.${body}`;
+  const signature = crypto.sign('RSA-SHA256', Buffer.from(input), key.privateKey).toString('base64url');
+  return `${input}.${signature}`;
+}
