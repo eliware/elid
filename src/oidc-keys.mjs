@@ -24,3 +24,19 @@ export function signJwt(payload, key) {
   const signature = crypto.sign('RSA-SHA256', Buffer.from(input), key.privateKey).toString('base64url');
   return `${input}.${signature}`;
 }
+
+export async function loadVerificationKeys(keyDir = OIDC_KEY_DIR) {
+  const keys = [await loadSigningKey(keyDir)];
+  const archive = path.join(keyDir, 'archive');
+  try {
+    for (const name of await fs.readdir(archive)) {
+      if (!name.endsWith('.pem')) continue;
+      const kid = name.slice(0, -4);
+      const publicKey = await fs.readFile(path.join(archive, name), 'utf8');
+      keys.push({ kid, publicKey, algorithm: 'RS256' });
+    }
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+  return keys;
+}

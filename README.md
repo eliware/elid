@@ -43,6 +43,8 @@ Generate an RS256 signing-key set outside the repository:
 
 ```sh
 OIDC_KEY_DIR=/var/lib/elid/keys npm run oidc:keys
+# rotate while retaining the prior public key
+OIDC_KEY_DIR=/var/lib/elid/keys npm run oidc:keys -- --rotate
 ```
 
 Back up the encrypted key directory. Never commit private keys. The runtime expects `current-private.pem`, `current-public.pem`, and `current-kid`.
