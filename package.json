@@ -10,7 +10,8 @@
         "start": "node server.mjs",
         "check": "node --check server.mjs && find src -name '*.mjs' -print0 | xargs -0 -n1 node --check",
         "lint": "npx oxlint .",
-        "test": "npx --node-options=\"--experimental-vm-modules --no-warnings\" jest --coverage --detectOpenHandles --silent --runInBand"
+        "test": "npx --node-options=\"--experimental-vm-modules --no-warnings\" jest --coverage --detectOpenHandles --silent --runInBand",
+        "client": "node bin/elid-client.mjs"
     },
     "dependencies": {
         "bcryptjs": "^3.0.2",

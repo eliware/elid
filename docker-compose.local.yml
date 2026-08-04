@@ -1,0 +1,12 @@
+services:
+  elid:
+    build: .
+    image: elid:local
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      HTTP_PORT: 8080
+      TRUST_PROXY: "true"
