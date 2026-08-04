@@ -34,5 +34,20 @@ export function mountOAuthRoutes(app, {db, oauth, rateLimit}) {
     if (!row || req.body.resource && req.body.resource!==row.resource) return res.json({active: false});
     res.json({active:true,client_id:row.client_id,sub:row.user_id,user_id:row.user_id,scope:row.scope,resource:row.resource,aud:row.resource,iss:process.env.OAUTH_ISSUER||'https://auth.purinton.us',exp:Number(row.exp),iat:Number(row.iat),token_type:'Bearer'});
   });
+  app.get('/userinfo', rateLimit({db, windowMs: 60000, max: 60}), async (req, res) => {
+    const header = req.headers.authorization || '';
+    const token = header.startsWith('Bearer ') ? header.slice(7).trim() : '';
+    if (!token) return res.status(401).json({error: 'invalid_token'});
+    const [rows] = await db.execute("SELECT t.user_id,u.username,UNIX_TIMESTAMP(t.expires_at) exp FROM oauth_tokens t JOIN oauth_users u ON u.id=t.user_id WHERE t.token_hash=SHA2(?,256) AND t.token_type='access' AND t.revoked_at IS NULL AND t.expires_at>NOW()", [token]);
+    const row = rows[0];
+    if (!row) return res.status(401).json({error: 'invalid_token'});
+    let groups = [];
+    try {
+      const [groupRows] = await db.execute('SELECT group_name FROM oauth_user_groups WHERE user_id=? ORDER BY group_name', [row.user_id]);
+      groups = groupRows.map(group => group.group_name);
+    } catch {}
+    res.json({sub: row.user_id, preferred_username: row.username, name: row.username, email: null, email_verified: false, groups});
+  });
+
   app.get('/oauth/introspect', (_, res) => res.status(405).json({error: 'use POST'}));
 }

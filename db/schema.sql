@@ -32,3 +32,9 @@ CREATE TABLE IF NOT EXISTS oauth_rate_limits (
 CREATE TABLE IF NOT EXISTS oauth_client_registrations (
   client_id VARCHAR(128) PRIMARY KEY, metadata JSON NOT NULL, created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, revoked_at TIMESTAMP NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE IF NOT EXISTS oauth_user_groups (
+  user_id VARCHAR(32) NOT NULL,
+  group_name VARCHAR(191) NOT NULL,
+  PRIMARY KEY(user_id, group_name),
+  INDEX(group_name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

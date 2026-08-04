@@ -4,7 +4,10 @@ import {snowflake} from './snowflake.mjs';
 const fail=(error,description)=>({error,error_description:description});
 const splitScopes=value=>[...new Set(String(value??'').trim().split(/\s+/).filter(Boolean))];
 const resourceUri=value=>{try { const u=new URL(String(value)); return u.protocol==='https:'&&!u.hash&&!u.search ? u.href : null; } catch { return null; }};
-const configuredResources=()=>{try { const x=JSON.parse(process.env.OAUTH_PROTECTED_RESOURCES||'[]'); return Array.isArray(x)?x.filter(Boolean):[]; } catch { return []; }};
+const configuredResources=()=>{try { const x=JSON.parse(process.env.OAUTH_PROTECTED_RESOURCES||'[\"https://funnel.purinton.us/mcp\"]'); return Array.isArray(x)?x.filter(Boolean):[]; } catch { return []; }};
+const configuredScopes=()=>splitScopes(process.env.OAUTH_SCOPES||'funnel:read funnel:write');
+const registrationScopes=()=>splitScopes(process.env.OAUTH_DCR_SCOPES||configuredScopes().join(' '));
+const registrationResources=()=>{try { const x=JSON.parse(process.env.OAUTH_DCR_RESOURCES||JSON.stringify(configuredResources())); return Array.isArray(x)?x.filter(Boolean):[]; } catch { return configuredResources(); }};
 const allowedValues=value=>{try { const x=typeof value==='string'?JSON.parse(value):value; return Array.isArray(x)?x:[]; } catch { return splitScopes(value); }};
 
 export function createOAuth(db) {
@@ -16,7 +19,7 @@ export function createOAuth(db) {
     return (allowed.length ? allowed : configured).includes(value);
   }
   function scopesAllowed(c, scope) {
-    const requested=splitScopes(scope); const known=splitScopes(process.env.OAUTH_SCOPES||'funnel:read funnel:write');
+    const requested=splitScopes(scope); const known=configuredScopes();
     if (requested.some(x=>!known.includes(x))) return false;
     const allowed=allowedValues(c?.allowed_scopes);
     return !allowed.length || requested.every(x=>allowed.includes(x));
