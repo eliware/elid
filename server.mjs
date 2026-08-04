@@ -6,5 +6,16 @@ import {createApp} from './src/app.mjs';
 
 const app = createApp({db, oauth: createOAuth(db), rateLimit});
 const port = Number(process.env.HTTP_PORT || 8080);
-app.listen(port, () => console.log(`OAuth provider listening on ${port}`));
+const server = app.listen(port, () => console.log(`OAuth provider listening on ${port}`));
+let stopping = false;
+function shutdown(signal) {
+  if (stopping) return;
+  stopping = true;
+  console.log(`Elid received ${signal}; shutting down`);
+  const forceExit = setTimeout(() => process.exit(1), 10000);
+  forceExit.unref();
+  server.close(() => { clearTimeout(forceExit); process.exit(0); });
+}
+process.once('SIGTERM', () => shutdown('SIGTERM'));
+process.once('SIGINT', () => shutdown('SIGINT'));
 export {app};
