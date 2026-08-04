@@ -36,3 +36,13 @@ npm run client -- \
 ```
 
 Repeat `--redirect-uri`, `--scope`, or `--resource` as needed. Public clients use PKCE and do not receive a secret. Add `--confidential` only for a server-side confidential client; the generated secret is printed once and must be stored securely.
+
+## OIDC signing keys
+
+Generate an RS256 signing-key set outside the repository:
+
+```sh
+OIDC_KEY_DIR=/var/lib/elid/keys npm run oidc:keys
+```
+
+Back up the encrypted key directory. Never commit private keys. The runtime expects `current-private.pem`, `current-public.pem`, and `current-kid`.
