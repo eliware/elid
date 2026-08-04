@@ -9,3 +9,6 @@ CREATE TABLE IF NOT EXISTS oauth_user_groups (
   PRIMARY KEY(user_id, group_name),
   INDEX(group_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+ALTER TABLE oauth_codes
+  ADD COLUMN nonce VARCHAR(255) NULL;
