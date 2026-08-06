@@ -8,7 +8,7 @@ permissions:
   packages: write
 jobs:
   publish:
-    runs-on: ubuntu-latest
+    runs-on: eliware-container
     steps:
       - uses: actions/checkout@v4
       - uses: docker/login-action@v3
