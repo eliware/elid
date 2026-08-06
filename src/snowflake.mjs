@@ -1,14 +1,20 @@
-const EPOCH = 1782864000000n;
-const MAX_SEQUENCE = 4095n;
-export function createSnowflake({ workerId = 0, processId = process.pid, now = Date.now, epoch = EPOCH } = {}) {
-  let last = -1n, sequence = 0n;
-  return () => {
-    let time = BigInt(now());
-    if (time < last) time = last;
-    if (time === last) { sequence = (sequence + 1n) & MAX_SEQUENCE; while (sequence === 0n) time = BigInt(now()); }
-    else sequence = 0n;
-    last = time;
-    return (((time - BigInt(epoch)) << 22n) | ((BigInt(workerId) & 31n) << 17n) | ((BigInt(processId) & 31n) << 12n) | sequence).toString();
-  };
+import { createSnowflakeGenerator } from '@eliware/snowflake';
+
+const workerSource = process.env.SNOWFLAKE_WORKER_ID ?? process.env.WORKER_ID ?? '0';
+const processSource = process.env.SNOWFLAKE_PROCESS_ID ?? process.env.PROCESS_ID ?? String(process.pid % 32);
+
+function numericId(value) {
+  if (/^\d+$/.test(value)) return Number(value);
+  const ordinal = value.match(/-(\d+)$/);
+  if (ordinal) return Number(ordinal[1]) % 32;
+  let hash = 0;
+  for (const character of value) hash = ((hash * 31) + character.charCodeAt(0)) >>> 0;
+  return hash % 32;
 }
-export const snowflake = createSnowflake();
+
+export const snowflake = createSnowflakeGenerator({
+  workerId: numericId(workerSource, 'workerId'),
+  processId: numericId(processSource, 'processId'),
+});
+
+export { createSnowflakeGenerator };
