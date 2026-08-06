@@ -15,7 +15,7 @@ async function makeKeys() {
 }
 
 test('loads signing key, exposes JWK, and signs JWTs', async () => {
-  const { dir, privateKey, publicKey } = await makeKeys();
+  const { dir, publicKey } = await makeKeys();
   const key = await loadSigningKey(dir);
   expect(key).toMatchObject({ kid: 'test-kid', algorithm: 'RS256' });
   expect(publicJwk(key)).toMatchObject({ kid: 'test-kid', alg: 'RS256', use: 'sig', key_ops: ['verify'], kty: 'RSA' });
