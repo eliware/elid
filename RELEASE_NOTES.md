@@ -1,5 +1,18 @@
 # Release Notes
 
+## 1.0.5
+
+### Changed
+
+- Improved application factory and OAuth route handling coverage.
+- Cleaned up unused OAuth configuration helpers and lint issues.
+
+### Testing
+
+- Added comprehensive tests for account, admin, application, OAuth, OAuth routes, OIDC keys, rate limiting, Snowflake configuration, and test routes.
+- Expanded targeted coverage across the Elid service, including edge cases and error paths.
+- Lint now completes with zero warnings and zero errors.
+
 ## 1.0.4
 
 ### Added
