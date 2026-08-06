@@ -23,7 +23,13 @@ export function createApp({db, oauth, rateLimit, expressFactory = express}) {
     try { const {loadVerificationKeys, publicJwk}=await import('./oidc-keys.mjs'); res.json({keys:(await loadVerificationKeys()).map(publicJwk)}); }
     catch { res.status(503).json({error:'signing_keys_unavailable'}); }
   });
-  app.get('/.well-known/oauth-authorization-server', (req, res) => { const issuer=process.env.OAUTH_ISSUER || `${req.protocol}://${req.get?.('host')||req.headers.host}`; const metadata={issuer,authorization_endpoint:`${issuer}/oauth/authorize`,token_endpoint:`${issuer}/oauth/token`,introspection_endpoint:`${issuer}/oauth/introspect`,registration_endpoint:`${issuer}/oauth/register`,response_types_supported:['code'],grant_types_supported:['authorization_code','refresh_token'],code_challenge_methods_supported:['S256'],scopes_supported:(process.env.OAUTH_SCOPES||'funnel:read funnel:write').split(/\s+/).filter(Boolean),request_parameter_supported:true,resource_indicators_supported:true}; console.info('oauth metadata request', {host:req.get?.('host')||req.headers.host, forwardedProto:req.headers['x-forwarded-proto']||null, issuer, registration_endpoint:metadata.registration_endpoint}); res.json(metadata); });
+  app.get('/.well-known/oauth-authorization-server', (req, res) => {
+    const requestHost = req.get ? req.get('host') : undefined;
+    const issuer = process.env.OAUTH_ISSUER || `${req.protocol}://${requestHost || req.headers.host}`;
+    const metadata = {issuer, authorization_endpoint:`${issuer}/oauth/authorize`, token_endpoint:`${issuer}/oauth/token`, introspection_endpoint:`${issuer}/oauth/introspect`, registration_endpoint:`${issuer}/oauth/register`, response_types_supported:['code'], grant_types_supported:['authorization_code','refresh_token'], code_challenge_methods_supported:['S256'], scopes_supported:(process.env.OAUTH_SCOPES || 'funnel:read funnel:write').split(/\s+/).filter(Boolean), request_parameter_supported:true, resource_indicators_supported:true};
+    console.info('oauth metadata request', {host:requestHost || req.headers.host, forwardedProto:req.headers['x-forwarded-proto'] || null, issuer, registration_endpoint:metadata.registration_endpoint});
+    res.json(metadata);
+  });
   app.get('/health', (_, res) => res.json({ok: true}));
   return app;
 }
