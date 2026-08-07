@@ -1,5 +1,20 @@
 # Release Notes
 
+## 1.0.6
+
+### Changed
+
+- Updated `@eliware/snowflake` from `^1.1.3` to `^1.1.4`.
+- Refreshed the lockfile for the published Snowflake 1.1.4 package, removing obsolete transitive dependencies.
+- Moved the container CI workflow to the Kubernetes container runner.
+
+### Verification
+
+- Jest tests pass: 71 tests across 11 suites.
+- Syntax checks pass.
+- Oxlint passes with zero warnings and zero errors.
+- Local smoke test passed for health, OAuth metadata, OpenID metadata, and JWKS endpoints.
+
 ## 1.0.5
 
 ### Changed
