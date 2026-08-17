@@ -1,5 +1,20 @@
 # Release Notes
 
+## 1.0.7
+
+### Changed
+
+- Standardized the default OIDC issuer on the Eliware authority while retaining
+  the existing authority hostname as a route alias.
+- Made discovery, ID-token, and introspection issuer defaults consistent so
+  both authority hostnames expose the same canonical OIDC identity.
+- Documented the dual-host authority behavior.
+
+### Verification
+
+- Jest tests pass: 71 tests across 11 suites at 100% coverage.
+- Syntax checks, Oxlint, and production dependency audit pass.
+
 ## 1.0.6
 
 ### Changed

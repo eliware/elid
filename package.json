@@ -1,6 +1,6 @@
 {
     "name": "elid-oauth-provider",
-    "version": "1.0.6",
+    "version": "1.0.7",
     "private": true,
     "type": "module",
     "engines": {
@@ -16,11 +16,11 @@
         "test:gaps": "npm test 2>&1 | grep '|' | grep -vF '|     100 |      100 |     100 |     100 |'"
     },
     "dependencies": {
-        "@eliware/snowflake": "^1.1.4",
+        "@eliware/snowflake": "^1.1.5",
         "bcryptjs": "^3.0.2",
         "dotenv": "^17.4.2",
         "express": "^5.1.0",
-        "mysql2": "^3.15.0"
+        "mysql2": "^3.23.3"
     },
     "jest": {
         "testEnvironment": "node",
@@ -38,6 +38,6 @@
     },
     "devDependencies": {
         "jest": "^30.4.2",
-        "oxlint": "^1.75.0"
+        "oxlint": "^1.78.0"
     }
 }
