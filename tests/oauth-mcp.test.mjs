@@ -10,7 +10,7 @@ const auth=(extra={})=>({client_id:'c',response_type:'code',redirect_uri:'https:
 
 beforeEach(()=>{delete process.env.OAUTH_PROTECTED_RESOURCES;delete process.env.OAUTH_SCOPES;delete process.env.OAUTH_DCR_SCOPES;delete process.env.OAUTH_DCR_RESOURCES;});
 
-test('resourceUri and authorization validation branches',async()=>{const {oauth}=makeDb();const {oauth:missing}=makeDb({clientRow:null});expect(oauth.resourceUri('https://x.test/a')).toBe('https://x.test/a');for(const x of ['http://x','https://x/a?x=1','https://x/a#h','bad', 'x'.repeat(2049)])expect(oauth.resourceUri(x)).toBeNull();
+test('resourceUri and authorization validation branches',async()=>{const {oauth}=makeDb();const {oauth:missing}=makeDb({clientRow:null});expect(oauth.resourceUri('https://x.test/a')).toBe('https://x.test/a');expect(oauth.resourceUri('https://x.test/')).toBe('https://x.test');for(const x of ['http://x','https://x/a?x=1','https://x/a#h','bad', 'x'.repeat(2049)])expect(oauth.resourceUri(x)).toBeNull();
  await expect(missing.authorize(auth({client_id:'bad'}),'u')).rejects.toMatchObject({error:'invalid_request'});
  for(const q of [auth({response_type:'token'}),auth({redirect_uri:''}),auth({code_challenge:''}),auth({code_challenge_method:'plain'})]) await expect(oauth.authorize(q,'u')).rejects.toMatchObject({error:'invalid_request'});
  await expect(oauth.authorize(auth({resource:'bad'}),'u')).rejects.toMatchObject({error:'invalid_target'});

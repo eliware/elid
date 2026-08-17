@@ -1,5 +1,16 @@
 # Release Notes
 
+## 1.0.8
+
+### Fixed
+
+- Normalize a root-path resource URI consistently when validating registered OAuth resources.
+
+### Verification
+
+- Jest tests pass: 71 tests across 11 suites at 100% coverage.
+- Syntax checks and Oxlint pass.
+
 ## 1.0.7
 
 ### Changed
