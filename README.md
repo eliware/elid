@@ -23,6 +23,11 @@ Production configuration
 
 Copy `.env.example` to `.env` and set real values. The app refuses to start without database configuration. Use HTTPS, `NODE_ENV=production`, and keep `ENABLE_TEST_ROUTES=false`. Test routes are available only when explicitly enabled outside production.
 
+Elid is reachable through both configured authority hostnames. Set
+`OAUTH_ISSUER` to the canonical authority advertised in production; both
+hostnames serve the same metadata, authorization, token, JWKS, and introspection
+application. Existing clients keep their exact registered redirect URIs.
+
 ## Client registration CLI
 
 Register a protected application from the Elid host after loading the production `.env`:

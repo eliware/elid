@@ -32,7 +32,7 @@ export function mountOAuthRoutes(app, {db, oauth, rateLimit}) {
     const [rows] = await db.execute("SELECT client_id,user_id,scope,resource,UNIX_TIMESTAMP(expires_at) exp,UNIX_TIMESTAMP(created_at) iat FROM oauth_tokens WHERE token_hash=SHA2(?,256) AND token_type='access' AND revoked_at IS NULL AND expires_at>NOW()", [req.body.token]);
     const row=rows[0];
     if (!row || req.body.resource && req.body.resource!==row.resource) return res.json({active: false});
-    res.json({active:true,client_id:row.client_id,sub:row.user_id,user_id:row.user_id,scope:row.scope,resource:row.resource,aud:row.resource,iss:process.env.OAUTH_ISSUER||'https://auth.purinton.us',exp:Number(row.exp),iat:Number(row.iat),token_type:'Bearer'});
+    res.json({active:true,client_id:row.client_id,sub:row.user_id,user_id:row.user_id,scope:row.scope,resource:row.resource,aud:row.resource,iss:process.env.OAUTH_ISSUER||'https://auth.eliware.org',exp:Number(row.exp),iat:Number(row.iat),token_type:'Bearer'});
   });
   app.get('/userinfo', rateLimit({db, windowMs: 60000, max: 60}), async (req, res) => {
     const header = req.headers.authorization || '';

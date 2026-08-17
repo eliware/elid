@@ -73,7 +73,7 @@ test('factory handles absent disable and production test-route guard', () => {
   expect(mounts.test).not.toHaveBeenCalled();
 });
 
-test('serves OIDC metadata with configured and derived issuer', async () => {
+test('serves OIDC metadata with configured and canonical issuer', async () => {
   process.env.OAUTH_ISSUER = 'https://issuer.example';
   process.env.OAUTH_SCOPES = 'one  two';
   let made = makeApp();
@@ -88,7 +88,7 @@ test('serves OIDC metadata with configured and derived issuer', async () => {
   createApp({db: {}, oauth: {}, rateLimit: jest.fn(() => 'x'), expressFactory: () => made.app});
   res = response();
   await made.routes.get('/.well-known/openid-configuration')({protocol: 'http', headers: {host: 'fallback'}}, res);
-  expect(res.value.issuer).toBe('http://fallback');
+  expect(res.value.issuer).toBe('https://auth.eliware.org');
   delete process.env.OAUTH_SCOPES;
   res = response();
   await made.routes.get('/.well-known/openid-configuration')({protocol: 'http', headers: {host: 'fallback'}, get: undefined}, res);
@@ -122,10 +122,10 @@ test('serves OAuth metadata and health', () => {
   delete process.env.OAUTH_SCOPES;
   const fallback = response();
   routes.get('/.well-known/oauth-authorization-server')({protocol: 'http', headers: {host: 'fallback'}, get: jest.fn(() => 'reported')}, fallback);
-  expect(fallback.value.issuer).toBe('http://reported');
+  expect(fallback.value.issuer).toBe('https://auth.eliware.org');
   const fallback2 = response();
   routes.get('/.well-known/oauth-authorization-server')({protocol: 'http', headers: {host: 'fallback'}, get: undefined}, fallback2);
-  expect(fallback2.value.issuer).toBe('http://fallback');
+  expect(fallback2.value.issuer).toBe('https://auth.eliware.org');
   routes.get('/health')({}, res);
   expect(res.value.ok).toBe(true);
 });

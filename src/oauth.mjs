@@ -96,7 +96,7 @@ export function createOAuth(db) {
       const [users]=await db.execute('SELECT username,email,display_name,email_verified FROM oauth_users WHERE id=?',[userId]);
       const user=users[0]||{}; let groups=[];
       try { const [rows]=await db.execute('SELECT group_name FROM oauth_user_groups WHERE user_id=? ORDER BY group_name',[userId]); groups=rows.map(x=>x.group_name); } catch {}
-      const claims={iss:process.env.OAUTH_ISSUER||'https://auth.purinton.us',sub:userId,aud:clientId,iat:now,exp:now+900,auth_time:now,preferred_username:user.username||userId,name:user.display_name||user.username||userId,scope};
+      const claims={iss:process.env.OAUTH_ISSUER||'https://auth.eliware.org',sub:userId,aud:clientId,iat:now,exp:now+900,auth_time:now,preferred_username:user.username||userId,name:user.display_name||user.username||userId,scope};
       if (user.email) { claims.email=user.email; claims.email_verified=Boolean(user.email_verified); }
       if (groups.length) claims.groups=groups;
       if (nonce) claims.nonce=nonce;
