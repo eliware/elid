@@ -1,6 +1,6 @@
 {
     "name": "elid-oauth-provider",
-    "version": "1.0.8",
+    "version": "1.0.9",
     "private": true,
     "type": "module",
     "engines": {
@@ -38,6 +38,6 @@
     },
     "devDependencies": {
         "jest": "^30.4.2",
-        "oxlint": "^1.78.0"
+        "oxlint": "^1.79.0"
     }
 }
