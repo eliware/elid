@@ -13,7 +13,7 @@
 
 ### Verification
 
-- Jest tests pass: 71 tests across 11 suites.
+- Jest tests pass: 75 tests across 12 suites.
 - Syntax checks pass.
 - Elid Kustomize rendering passes.
 
