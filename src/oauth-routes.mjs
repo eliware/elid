@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import {authorityIssuer} from './authority.mjs';
 
 export const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export const loginPage = (client,q={}) => `<!doctype html><meta name=viewport content="width=device-width"><title>Sign in - Elid</title><style>:root{color-scheme:dark}body{font:15px system-ui;min-height:100vh;display:grid;place-items:center;margin:0;background:radial-gradient(circle at top,#24334b,#111 60%);color:#eee}.card{width:min(420px,calc(100% - 2rem));box-sizing:border-box;background:#1d1d1dcc;border:1px solid #4b5563;border-radius:14px;padding:2rem}input,button{box-sizing:border-box;width:100%;padding:.75rem;margin:.4rem 0;background:#111;color:#fff;border:1px solid #667085;border-radius:6px}button{background:#4f8cff}</style><main class=card><b>ELID OAUTH</b><h1>Sign in to continue</h1><p>${esc(client)} is requesting access.</p><p>Scopes: <b>${esc(q.scope||'none')}</b><br>Resource: <b>${esc(q.resource||'unspecified')}</b></p><form id=f method=post><input type=hidden name=data value="DATA"><input name=username autocomplete=username required><input name=password type=password autocomplete=current-password required><button>Authorize application</button><p id=e hidden>Invalid username or password.</p></form></main><script>f.onsubmit=()=>{e.hidden=true}</script>`;
@@ -7,8 +8,10 @@ export function mountOAuthRoutes(app, {db, oauth, rateLimit}) {
   app.get('/oauth/authorize', async (req, res) => {
     if (!req.query.client_id || !req.query.redirect_uri || !req.query.code_challenge) return res.status(400).send('Missing OAuth parameters');
     const data = Buffer.from(JSON.stringify(req.query)).toString('base64url');
-    const [rows] = await db.execute('SELECT name FROM oauth_clients WHERE client_id=?', [req.query.client_id]);
-    res.type('html').send(loginPage(rows[0]?.name || req.query.client_id,req.query).replace('DATA', data));
+    const result = await db.execute('SELECT name FROM oauth_clients WHERE client_id=?', [req.query.client_id]);
+    const rows = result?.[0] || [];
+    const clientName = String(rows[0]?.name || req.query.client_id).trim();
+    res.type('html').send(loginPage(clientName,req.query).replace('DATA', data));
   });
   app.post('/oauth/authorize', rateLimit({db, windowMs: 60000, max: 20}), async (req, res) => {
     try {
@@ -33,7 +36,7 @@ export function mountOAuthRoutes(app, {db, oauth, rateLimit}) {
     const [rows] = await db.execute("SELECT client_id,user_id,scope,resource,UNIX_TIMESTAMP(expires_at) exp,UNIX_TIMESTAMP(created_at) iat FROM oauth_tokens WHERE token_hash=SHA2(?,256) AND token_type='access' AND revoked_at IS NULL AND expires_at>NOW()", [req.body.token]);
     const row=rows[0];
     if (!row || req.body.resource && req.body.resource!==row.resource) return res.json({active: false});
-    res.json({active:true,client_id:row.client_id,sub:row.user_id,user_id:row.user_id,scope:row.scope,resource:row.resource,aud:row.resource,iss:process.env.OAUTH_ISSUER||'https://auth.eliware.org',exp:Number(row.exp),iat:Number(row.iat),token_type:'Bearer'});
+    res.json({active:true,client_id:row.client_id,sub:row.user_id,user_id:row.user_id,scope:row.scope,resource:row.resource,aud:row.resource,iss:authorityIssuer(),exp:Number(row.exp),iat:Number(row.iat),token_type:'Bearer'});
   });
   app.get('/userinfo', rateLimit({db, windowMs: 60000, max: 60}), async (req, res) => {
     const header = req.headers.authorization || '';

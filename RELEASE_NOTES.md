@@ -1,5 +1,22 @@
 # Release Notes
 
+## 1.0.9
+
+### Changed
+
+- Served OAuth/OIDC discovery from configured authority hostnames, including
+  `auth.purinton.us`, `auth.eliware.org`, `auth.discommand.com`,
+  `auth.tasklit.com`, and `auth.pianotomidi.com`.
+- Displayed the registered OAuth client name on the authorization login page.
+- Added GitOps HTTP and HTTPS routing for all supported authority hostnames
+  without HTTP-to-HTTPS redirects.
+
+### Verification
+
+- Jest tests pass: 71 tests across 11 suites.
+- Syntax checks pass.
+- Elid Kustomize rendering passes.
+
 ## 1.0.8
 
 ### Fixed
