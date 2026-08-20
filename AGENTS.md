@@ -27,8 +27,11 @@ mysql elid < db/schema.sql
 systemctl restart elid.service
 curl -fsS http://127.0.0.1:8080/health
 ```
-
 For changes to OAuth flows, test `/test/login`, callback handling, account login, and admin login. Check logs with:
 ```sh
 journalctl -u elid.service -n 50 --no-pager
 ```
+- Do not over-engineer simple tasks.
+- Do not guess when confused.
+- Do not make random, pointless changes.
+- Check your own work before saying you're done.
