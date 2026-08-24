@@ -32,7 +32,6 @@ yarn-error.log*
 *.swp
 *.swo
 .agentx_responseid
-.jest.result
 
 .local-oidc-keys/
 .agentx*
