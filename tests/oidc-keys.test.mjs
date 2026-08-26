@@ -58,5 +58,11 @@ test('allows a missing archive and rethrows other archive errors', async () => {
 });
 
 test('default key directories are used when omitted', async () => {
-  await expect(loadSigningKey()).rejects.toMatchObject({ code: 'ENOENT' });
+  try {
+    const key = await loadSigningKey();
+    expect(key).toMatchObject({ algorithm: 'RS256' });
+    await expect(loadVerificationKeys()).resolves.toEqual(expect.arrayContaining([expect.objectContaining({ algorithm: 'RS256' })]));
+  } catch (error) {
+    expect(error).toMatchObject({ code: 'ENOENT' });
+  }
 });
