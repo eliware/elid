@@ -46,6 +46,7 @@ test('helper branches and optional client fields',async()=>{const {routes,db}=se
  db.query.mockResolvedValueOnce([[{id:1,name:'&<>"\'',client_id:'c',redirect_uris:['x'],public_client:true,allowed_scopes:'s',allowed_resources:'r'}]]);let r=res();await run(routes.get['/admin/clients'][1],authReq,r);expect(r.send.mock.calls[0][0]).toContain('&#39;');
  db.query.mockResolvedValueOnce([[{id:1,name:'N',client_id:'c',redirect_uris:'not-json',public_client:false}]]);r=res();await run(routes.get['/admin/clients'][1],authReq,r);expect(r.send).toHaveBeenCalled();
  r=res();await run(routes.post['/admin/clients'][1],req({name:'n',client_id:'c',redirect_uris:'https://x'}),r);expect(r.redirect).toHaveBeenCalled();
+ r=res();await run(routes.post['/admin/clients'][1],req({name:'n',client_id:'c',redirect_uris:'https://x',allowed_resources:'http://bad'}),r);expect(r.status).toHaveBeenCalledWith(400);
  r=res();await run(routes.post['/admin/users'][1],req({},{}),r);expect(r.status).toHaveBeenCalledWith(400);
  r=res();await run(routes.post['/admin/users/:id/password'][1],req({}, {},{id:'1'}),r);expect(r.status).toHaveBeenCalledWith(400);
 });

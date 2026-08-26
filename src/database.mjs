@@ -1,16 +1,15 @@
-import mysql from 'mysql2/promise';
+import {createDb} from '@eliware/mysql';
 import 'dotenv/config';
 
 const required = ['MYSQL_HOSTNAME', 'MYSQL_USERNAME', 'MYSQL_PASSWORD', 'MYSQL_DATABASE'];
 const missing = required.filter(name => !process.env[name] && !(name === 'MYSQL_USERNAME' && process.env.MYSQL_USERAME));
 if (missing.length) throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
 
-export const db = mysql.createPool({
-  host: process.env.MYSQL_HOSTNAME,
-  user: process.env.MYSQL_USERNAME || process.env.MYSQL_USERAME,
-  password: process.env.MYSQL_PASSWORD,
-  database: process.env.MYSQL_DATABASE,
-  waitForConnections: true,
-  connectionLimit: 10,
-  namedPlaceholders: true,
-});
+const env = {
+  MYSQL_HOST: process.env.MYSQL_HOSTNAME,
+  MYSQL_USER: process.env.MYSQL_USERNAME || process.env.MYSQL_USERAME,
+  MYSQL_PASSWORD: process.env.MYSQL_PASSWORD,
+  MYSQL_DATABASE: process.env.MYSQL_DATABASE,
+};
+
+export const db = await createDb({env, poolOptions: {namedPlaceholders: true}});

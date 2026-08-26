@@ -56,3 +56,23 @@ OIDC_KEY_DIR=/var/lib/elid/keys npm run oidc:keys -- --rotate
 Back up the encrypted key directory. Never commit private keys. The runtime expects `current-private.pem`, `current-public.pem`, and `current-kid`.
 
 For local Compose testing, place a disposable key set in `.local-oidc-keys/`; it is ignored and mounted read-only. Production should use a Kubernetes Secret or protected host volume, not repository files.
+
+## Operations and validation
+
+The service requires MySQL and external OIDC signing keys. Run it behind HTTPS
+with `TRUST_PROXY=true`. `/health` is a liveness endpoint and does not replace
+database or key-readiness monitoring. Systemd uses `elid.service`; Compose is
+provided for local validation. Back up MySQL using the organization's database
+backup procedure and back up the encrypted OIDC key directory. Roll back by
+restoring the previous application image or checkout and restarting the service;
+do not roll back the database schema without reviewing migrations.
+
+Local validation:
+
+```sh
+npm test
+npm run lint
+npm run typecheck
+npm audit --omit=dev --audit-level=moderate
+npm run pack
+```

@@ -94,3 +94,11 @@
 - Jest tests pass.
 - Snowflake generation remains compatible with existing `VARCHAR(32)` ID columns.
 - Existing database IDs were migrated to the shared generator format without collisions.
+# 2.0.0 — Unreleased
+
+- Modernized the service for the current Eliware conventions, including Node.js
+  26, shared testing, cross-platform CI, production dependency auditing, and
+  repository-owned Knit validation.
+- Adopted `@eliware/common` for logging and lifecycle handling and
+  `@eliware/mysql` for database pool construction.
+- No version bump, tag, publication, deployment, or push has been performed.

@@ -11,7 +11,7 @@ Elid is an ESM-only Node.js OAuth 2.1-style authorization provider backed by MyS
 - Modules: `src/*.mjs`
 
 ## Rules
-- Use `.mjs` files and ESM imports/exports only. Never CommonJS.
+- Use Node.js 26, `.mjs` files, and ESM imports/exports only. Never CommonJS.
 - Keep all numeric IDs as Snowflake decimal strings stored in MySQL `VARCHAR(32)`.
 - Use parameterized SQL. Never interpolate user input into SQL.
 - Do not log passwords, tokens, authorization codes, or session cookies.
@@ -35,3 +35,5 @@ journalctl -u elid.service -n 50 --no-pager
 - Do not guess when confused.
 - Do not make random, pointless changes.
 - Check your own work before saying you're done.
+- Use `@eliware/common` for shared logging and lifecycle behavior, and
+  `@eliware/mysql` for MySQL pool construction.

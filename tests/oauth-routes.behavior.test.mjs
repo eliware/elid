@@ -1,6 +1,7 @@
 import {jest} from '@jest/globals';
 import bcrypt from 'bcryptjs';
 import {mountOAuthRoutes, esc, loginPage} from '../src/oauth-routes.mjs';
+import {digest} from '../src/crypto.mjs';
 
 const response=()=>({statusCode:200,headers:{},body:null,redirectTo:null,status(n){this.statusCode=n;return this},send(v){this.body=v;return this},json(v){this.body=v;return this},redirect(v){this.redirectTo=v;return this},type(){return this}});
 const encoded=o=>Buffer.from(JSON.stringify(o)).toString('base64url');
@@ -39,7 +40,10 @@ test('token supports success, OAuth error, and exception',async()=>{const {route
 
 test('introspection requires confidential client authentication',async()=>{const {routes,db}=setup();let r=response();await routes['POST /oauth/introspect'](req({}),r);expect(r.body).toEqual({active:false});
   r=response();await routes['POST /oauth/introspect'](req({token:'t'}),r);expect(r.statusCode).toBe(401);
-  db.execute.mockResolvedValueOnce([[{client_secret_hash:'9a1c2a7b8e5d3f1c9c1d1e7c5a6b8f9d4e2a1b7c6d5e4f3a2b1c0d9e8f7a6b5c'}]]).mockResolvedValueOnce([[]]);r=response();await routes['POST /oauth/introspect'](req({token:'t'},{},{authorization:'Basic Yzpz'}),r);expect(r.statusCode).toBe(401);
+  db.execute.mockResolvedValueOnce([[{client_secret_hash:'bad'}]]);r=response();await routes['POST /oauth/introspect'](req({token:'t'},{},{authorization:'Basic Yzpz'}),r);expect(r.statusCode).toBe(401);
+  db.execute.mockResolvedValueOnce([[{client_secret_hash:digest('s')}]]).mockResolvedValueOnce([[]]);r=response();await routes['POST /oauth/introspect'](req({token:'t'},{},{authorization:'Basic Yzpz'}),r);expect(r.body).toEqual({active:false});
+  db.execute.mockResolvedValueOnce([[{client_secret_hash:digest('s')}]]).mockResolvedValueOnce([[{resource:'one'}]]);r=response();await routes['POST /oauth/introspect'](req({token:'t',resource:'two'},{},{authorization:'Basic Yzpz'}),r);expect(r.body).toEqual({active:false});
+  db.execute.mockResolvedValueOnce([[{client_secret_hash:digest('s')}]]).mockResolvedValueOnce([[{client_id:'c',user_id:'u',scope:'s',resource:'one',exp:'4',iat:'3'}]]);r=response();await routes['POST /oauth/introspect'](req({token:'t',resource:'one'},{},{authorization:'Basic Yzpz'}),r);expect(r.body.active).toBe(true);
   r=response();await routes['GET /oauth/introspect']({},r);expect(r.statusCode).toBe(405);
 });
 
