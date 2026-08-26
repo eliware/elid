@@ -12,6 +12,13 @@ export function createApp({db, oauth, rateLimit, expressFactory = express}) {
   if (process.env.TRUST_PROXY === 'true') app.set('trust proxy', 1);
   app.use(express.urlencoded({extended: false, limit: '32kb'}));
   app.use(express.json({limit: '32kb'}));
+  app.use((req, res, next) => {
+    if (req.method !== 'POST' || req.path.startsWith('/oauth/token') || req.path.startsWith('/oauth/introspect') || req.path.startsWith('/oauth/register')) return next();
+    const origin = req.get?.('origin');
+    const host = req.get?.('host');
+    if (origin && host && origin !== `https://${host}` && !(process.env.NODE_ENV !== 'production' && origin === `http://${host}`)) return res.status(403).send('Invalid request origin');
+    next();
+  });
   app.use(rateLimit({db, windowMs: envNumber('GLOBAL_RATE_WINDOW_MS', 60000), max: envNumber('GLOBAL_RATE_MAX', 1000)}));
   mountAdmin(app, db); mountAccount(app, db);
   mountOAuthRoutes(app, {db, oauth, rateLimit});

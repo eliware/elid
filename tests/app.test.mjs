@@ -48,7 +48,7 @@ test('factory configures middleware and optional test routes', () => {
   expect(app.disable).toHaveBeenCalledWith('x-powered-by');
   expect(app.set).toHaveBeenCalledWith('trust proxy', 1);
   expect(limiter).toHaveBeenCalledWith({db: 'db', windowMs: 60000, max: 25});
-  expect(app.use).toHaveBeenCalledTimes(3);
+  expect(app.use).toHaveBeenCalledTimes(4);
   expect(mounts.admin).toHaveBeenCalledWith(app, 'db');
   expect(mounts.account).toHaveBeenCalledWith(app, 'db');
   expect(mounts.oauth).toHaveBeenCalledWith(app, {db: 'db', oauth: 'oauth', rateLimit: limiter});

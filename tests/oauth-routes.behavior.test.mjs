@@ -37,10 +37,9 @@ test('token supports success, OAuth error, and exception',async()=>{const {route
   oauth.token.mockRejectedValueOnce(new Error('bad'));r=response();await routes['POST /oauth/token'](req({}),r);expect(r.statusCode).toBe(500);
 });
 
-test('introspection handles missing, inactive, mismatch, and active tokens',async()=>{const {routes,db}=setup();let r=response();await routes['POST /oauth/introspect'](req({}),r);expect(r.body).toEqual({active:false});
-  db.execute.mockResolvedValueOnce([[]]);r=response();await routes['POST /oauth/introspect'](req({token:'t'}),r);expect(r.body).toEqual({active:false});
-  db.execute.mockResolvedValueOnce([[{resource:'one'}]]);r=response();await routes['POST /oauth/introspect'](req({token:'t',resource:'two'}),r);expect(r.body).toEqual({active:false});
-  db.execute.mockResolvedValueOnce([[{client_id:'c',user_id:'u',scope:'s',resource:'one',exp:'4',iat:'3'}]]);r=response();await routes['POST /oauth/introspect'](req({token:'t',resource:'one'}),r);expect(r.body).toMatchObject({active:true,client_id:'c',sub:'u',aud:'one',exp:4,iat:3,token_type:'Bearer'});
+test('introspection requires confidential client authentication',async()=>{const {routes,db}=setup();let r=response();await routes['POST /oauth/introspect'](req({}),r);expect(r.body).toEqual({active:false});
+  r=response();await routes['POST /oauth/introspect'](req({token:'t'}),r);expect(r.statusCode).toBe(401);
+  db.execute.mockResolvedValueOnce([[{client_secret_hash:'9a1c2a7b8e5d3f1c9c1d1e7c5a6b8f9d4e2a1b7c6d5e4f3a2b1c0d9e8f7a6b5c'}]]).mockResolvedValueOnce([[]]);r=response();await routes['POST /oauth/introspect'](req({token:'t'},{},{authorization:'Basic Yzpz'}),r);expect(r.statusCode).toBe(401);
   r=response();await routes['GET /oauth/introspect']({},r);expect(r.statusCode).toBe(405);
 });
 

@@ -5,7 +5,7 @@ import {loadSigningKey, signJwt} from './oidc-keys.mjs';
 const fail=(error,description)=>({error,error_description:description});
 /* istanbul ignore next */
 const splitScopes=value=>[...new Set(String(value??'').trim().split(/\s+/).filter(Boolean))];
-const resourceUri=value=>{try { const u=new URL(String(value)); return u.protocol==='https:'&&!u.hash&&!u.search ? `${u.protocol}//${u.host}${u.pathname === '/' ? '' : u.pathname}` : null; } catch { return null; }};
+const resourceUri=value=>{try { const raw=String(value); const u=new URL(raw); return u.protocol==='https:'&&!u.hash&&!u.search&&u.href===raw ? raw : null; } catch { return null; }};
 /* istanbul ignore next */
 const configuredResources=()=>{try { const x=JSON.parse(process.env.OAUTH_PROTECTED_RESOURCES||'["https://funnel.purinton.us/mcp"]'); return Array.isArray(x)?x.filter(Boolean):[]; } catch { return []; }};
 /* istanbul ignore next */
@@ -75,7 +75,9 @@ export function createOAuth(db) {
       if(row.resource && body.resource!==row.resource) return fail('invalid_grant','Invalid resource');
       /* istanbul ignore next */
       if(row.resource && !resourceAllowed(c,row.resource)) return fail('invalid_grant','Invalid resource');
-      await db.execute('UPDATE oauth_codes SET used_at=NOW() WHERE id=? AND used_at IS NULL',[row.id]); return issue(row.client_id,row.user_id,row.scope,row.family_id,row.resource,row.nonce);
+      const [used] = await db.execute('UPDATE oauth_codes SET used_at=NOW() WHERE id=? AND used_at IS NULL',[row.id]);
+      if (used?.affectedRows !== undefined && used.affectedRows !== 1) return fail('invalid_grant','Authorization code has already been used');
+      return issue(row.client_id,row.user_id,row.scope,row.family_id,row.resource,row.nonce);
     }
     /* istanbul ignore next */
     if(body.grant_type==='refresh_token') {

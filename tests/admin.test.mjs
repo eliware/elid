@@ -37,7 +37,7 @@ test('delete users root/nonroot',async()=>{const {routes,db}=setup();db.execute.
  db.execute.mockResolvedValueOnce([[{username:'u'}]]).mockResolvedValueOnce([[]]);r=res();await run(routes.post['/admin/users/:id/delete'][1],req({}, {},{id:'2'}),r);expect(r.redirect).toHaveBeenCalledWith('/admin');});
 
 test('client create validation/success and delete',async()=>{const {routes,db}=setup();let r=res();await run(routes.post['/admin/clients'][1],req({redirect_uris:' , '}),r);expect(r.status).toHaveBeenCalledWith(400);
- r=res();await run(routes.post['/admin/clients'][1],req({name:'n',client_id:'c',redirect_uris:' https://a, http://b ',allowed_scopes:' a  b ',allowed_resources:' r, '}),r);expect(r.redirect).toHaveBeenCalledWith('/admin/clients');
+ r=res();await run(routes.post['/admin/clients'][1],req({name:'n',client_id:'c',redirect_uris:' https://a ',allowed_scopes:' a  b ',allowed_resources:' https://r.example/ '}),r);expect(r.redirect).toHaveBeenCalledWith('/admin/clients');
  db.execute.mockResolvedValueOnce([[{client_id:'c'}]]).mockResolvedValueOnce([[]]).mockResolvedValueOnce([[]]).mockResolvedValueOnce([[]]);r=res();await run(routes.post['/admin/clients/:id/delete'][1],req({}, {},{id:'1'}),r);expect(r.redirect).toHaveBeenCalledWith('/admin/clients');
  db.execute.mockResolvedValueOnce([[]]).mockResolvedValueOnce([[]]);r=res();await run(routes.post['/admin/clients/:id/delete'][1],req({}, {},{id:'2'}),r);expect(r.redirect).toHaveBeenCalledWith('/admin/clients');});
 
@@ -45,7 +45,7 @@ test('client create validation/success and delete',async()=>{const {routes,db}=s
 test('helper branches and optional client fields',async()=>{const {routes,db}=setup();
  db.query.mockResolvedValueOnce([[{id:1,name:'&<>"\'',client_id:'c',redirect_uris:['x'],public_client:true,allowed_scopes:'s',allowed_resources:'r'}]]);let r=res();await run(routes.get['/admin/clients'][1],authReq,r);expect(r.send.mock.calls[0][0]).toContain('&#39;');
  db.query.mockResolvedValueOnce([[{id:1,name:'N',client_id:'c',redirect_uris:'not-json',public_client:false}]]);r=res();await run(routes.get['/admin/clients'][1],authReq,r);expect(r.send).toHaveBeenCalled();
- r=res();await run(routes.post['/admin/clients'][1],req({name:'n',client_id:'c',redirect_uris:'x'}),r);expect(r.redirect).toHaveBeenCalled();
+ r=res();await run(routes.post['/admin/clients'][1],req({name:'n',client_id:'c',redirect_uris:'https://x'}),r);expect(r.redirect).toHaveBeenCalled();
  r=res();await run(routes.post['/admin/users'][1],req({},{}),r);expect(r.status).toHaveBeenCalledWith(400);
  r=res();await run(routes.post['/admin/users/:id/password'][1],req({}, {},{id:'1'}),r);expect(r.status).toHaveBeenCalledWith(400);
 });
