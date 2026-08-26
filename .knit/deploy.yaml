@@ -3,7 +3,7 @@ on:
   push:
     deployments:
       - target: dev
-        cwd: /usr/src/eliware/elid
+        cwd: /opt/elid
         commands:
           - git pull --ff-only
           - npm ci
